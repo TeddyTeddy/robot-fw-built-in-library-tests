@@ -296,6 +296,8 @@ Use "Create List"
     #  The returned list can be assigned both to ${scalar} and @{list} variables
     @{list} =   Create List     a   b   c
     Should Be True      ${list} == ['a', 'b', 'c']
+    ${isList} =         is list in python   ${list}
+    Should Be True      ${isList}
     ${list} = 	Create List 	${1} 	${2} 	${3}   # items are called "Number Variables" in Robot and they are integers
     Should Be True      $list == [1, 2, 3]
     ${isInteger} =      is integer in python  ${list}[1]

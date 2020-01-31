@@ -54,6 +54,9 @@ def get_list():
 def is_string_in_python(s):
     return type(s) == str
 
+@keyword
+def is_list_in_python(l):
+    return type(l) == list
 
 @keyword
 def is_integer_in_python(i):
