@@ -1379,7 +1379,7 @@ Use "Should Not Be Equal As Numbers"
     Should Not Be Equal As Numbers      first=${1.123}  second=${1.345}     msg='The overwriting error msg'  precision=1  # 1.1 != 1.3
 
 Use "Should Not Be Equal As Strings"
-    [Documentation]     Unclear keyword
+    [Documentation]     https://github.com/robotframework/robotframework/blob/master/src/robot/libraries/BuiltIn.py
     [Tags]              not-understood
     Fail                Implement this case
 
