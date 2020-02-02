@@ -11,7 +11,8 @@ Suite Teardown      Suite Teardown
 
 # To run:
 # robot  --pythonpath Resources --noncritical failure-expected -d Results/ -v  not-important-setup:'Not Important Setup' -v  important-teardown:'Test Teardown Using "Run Keyword If Test Failed" And "Run Keyword If Test Passed"' -v TestSetup:'Use Pass Execution Setup' -v TestTeardown:'Use Pass Execution Teardown' -v keyword_to_run:'add multiple values' Tests/built-in-library-test.robot  Tests/utilize-global-variable.robot
-
+# OR
+# robot  --pythonpath Resources --noncritical failure-expected -d Results/ -v  not-important-setup:'Not Important Setup' -v  important-teardown:'Test Teardown Using "Run Keyword If Test Failed" And "Run Keyword If Test Passed"' -v TestSetup:'Use Pass Execution Setup' -v TestTeardown:'Use Pass Execution Teardown' -v keyword_to_run:'add multiple values' Tests/__init__.robot  Tests/built-in-library-test.robot  Tests/utilize-global-variable.robot Tests/child-suites/child-suite.robot
 
 *** Variables ***
 ${GLOBAL_VAR}           Global Value
