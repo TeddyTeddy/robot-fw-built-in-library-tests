@@ -600,9 +600,9 @@ Use "Regexp Escape"
     Fail    Test needs to be implemented
 
 Use "Reload Library"
-    [Documentation]     Totally unclear
+    [Documentation]     https://stackoverflow.com/questions/60025662/robot-fw-builtin-library-reload-library-keyword-how-to-use-reload-libra
     [Tags]              not-understood
-    Fail    Test needs to be implemented
+    Fail    implement this once ticket is answered
 
 Use "Remove Tags"
     [Documentation]     When this test case got executed, it will have 2 tags: dynamic-tag-1 + keep-me-tag
