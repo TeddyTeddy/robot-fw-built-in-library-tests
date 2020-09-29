@@ -12,7 +12,7 @@ Suite Teardown      Suite Teardown
 # To run:
 # robot  --pythonpath Resources --noncritical failure-expected -d Results/ -v  not-important-setup:'Not Important Setup' -v  important-teardown:'Test Teardown Using "Run Keyword If Test Failed" And "Run Keyword If Test Passed"' -v TestSetup:'Use Pass Execution Setup' -v TestTeardown:'Use Pass Execution Teardown' -v keyword_to_run:'add multiple values' Tests/built-in-library-test.robot  Tests/utilize-global-variable.robot
 # OR
-# robot  --pythonpath Resources --noncritical failure-expected -d Results/ -v  not-important-setup:'Not Important Setup' -v  important-teardown:'Test Teardown Using "Run Keyword If Test Failed" And "Run Keyword If Test Passed"' -v TestSetup:'Use Pass Execution Setup' -v TestTeardown:'Use Pass Execution Teardown' -v keyword_to_run:'add multiple values' Tests/__init__.robot  Tests/built-in-library-test.robot  Tests/utilize-global-variable.robot Tests/child-suites/child-suite.robot
+# robot  --pythonpath Resources --noncritical failure-expected -d Results/ -v  not-important-setup:'Not Important Setup' -v  important-teardown:'Test Teardown Using "Run Keyword If Test Failed" And "Run Keyword If Test Passed"' -v TestSetup:'Test Setup With Pass Execution' -v TestTeardown:'Use Pass Execution Teardown' -v keyword_to_run:'add multiple values' Tests/__init__.robot  Tests/built-in-library-test.robot  Tests/utilize-global-variable.robot Tests/child-suites/child-suite.robot
 
 *** Variables ***
 ${GLOBAL_VAR}           Global Value
@@ -48,6 +48,11 @@ Use Pass Execution Setup
 
 Use Pass Execution Teardown
     Log     Teardown executed
+
+Test Setup With Pass Execution
+    Log    Line 1
+    Pass Execution      Suite Setup Execution Stops Here
+    Log    This line wont be logged
 
 Log "Key: Value" Pairs
     [Arguments]  ${variables_dict}
@@ -93,7 +98,7 @@ Windows Keyword
     [return]  Windows
 
 Teardown That Uses "Run Keyword If Timeout Occurred"
-    Run Keyword If Timeout Occurred     Log       In 'Use "Run Keyword If Timeout Occurred"' test, timeout occurred
+    Run Keyword If Timeout Occurred     Log       In the test, timeout occurred
 
 This Keyword Must Access ListX
     [Documentation]     note that this keyword has no [Arguments] defined
@@ -127,13 +132,13 @@ Use "Catenate"
     Should Be Equal As Strings     ${str1}    Hello---World
 
 Use "Continue For Loop" and "Run Keyword If"
-    FOR  ${var}  IN   @{LIST}
+    FOR  ${var}  IN   @{LIST}                   # [ 'Value1', 'Value2', 'CONTINUE', 'Value3']
         Run Keyword If  '${var}' == 'CONTINUE'    Continue For Loop
         Log   ${var}
     END
 
 Use "Continue For Loop If"
-    FOR  ${var}  IN   @{LIST}
+    FOR  ${var}  IN   @{LIST}                   # [ 'Value1', 'Value2', 'CONTINUE', 'Value3']
         Continue For Loop If  '${var}' == 'CONTINUE'
         Log   ${var}
     END
@@ -151,7 +156,7 @@ Use "Convert To Binary"
     Should Be Equal     ${binary_string}      1010
 
     ${variable} =       Set Variable    F
-    ${binary_string} =  Convert To Binary   ${variable}     base=16     prefix=0x     length=8
+    ${binary_string} =  Convert To Binary   ${variable}     base=16     prefix=0b     length=8
     Should Be Equal     ${binary_string}      0x00001111
 
     ${binary_string} =  Convert To Binary 	-2 	prefix=B 	length=4 	# Result is -B0010
@@ -348,29 +353,29 @@ Use "Fail"
 #    Fatal Error 	    msg=Fatal Error. The rest of the tests below will not be executed
 
 Use "Get Count"
-    [Documentation]     Get Count 	item1, item2
-    ...                 Returns and logs how many times item2 is found from item1
+    [Documentation]     Get Count 	container, item
+    ...                 Returns and logs how many times item is found from container
     ...                 This keyword works with Python strings and lists and
     ...                 all objects that either have count method or can be converted to Python lists.
 
     # with Python strings
-    ${item1} =          Set Variable   Lorem Ipsum Lorem Ipsum Lorem
-    ${item2} =          Set Variable   Ipsum
-    ${count} =          Get Count      item1=${item1}    item2=${item2}
+    ${container} =      Set Variable   Lorem Ipsum Lorem Ipsum Lorem
+    ${item} =           Set Variable   I
+    ${count} =          Get Count      container=${container}    item=${item}
     Should Be Equal     ${count}       ${2}
 
     # with Python lists
     @{list} =           get list      # ['a', 'b', 'a', 'c', 1, 0, 3, 1, 2, 1]
-    ${count} =          Get Count     item1=${list}     item2=a
+    ${count} =          Get Count     container=${list}     item=a
     Should Be Equal     ${count}       ${2}
-    ${count} =          Get Count     item1=${list}     item2=${1}
+    ${count} =          Get Count     container=${list}     item=${1}
     Should Be Equal     ${count}       ${3}
 
     # with any object that can be converted to Python lists
     ${tuple} =          get tuple      # ('a', 'b', 'a', 'c', 1, 0, 3, 1, 2, 1)
-    ${count} =          Get Count     item1=${tuple}     item2=a
+    ${count} =          Get Count     container=${tuple}     item=a
     Should Be Equal     ${count}       ${2}
-    ${count} =          Get Count     item1=${tuple}     item2=${1}
+    ${count} =          Get Count     container=${tuple}     item=${1}
     Should Be Equal     ${count}       ${3}
 
 Use "Get Length"
@@ -383,11 +388,13 @@ Use "Get Length"
     @{list} =           get list      # ['a', 'b', 'a', 'c', 1, 0, 3, 1, 2, 1]
     ${length} =         Get Length      item=${list}
     Should Be Equal     ${length}       ${10}
-
-    # If that fails, the keyword tries to call the item's possible length and size methods directly
     ${string_wrapper} =   get_string_wrapper  I am a string of length 26
     ${length} =         Get Length      item=${string_wrapper}
     Should Be Equal     ${length}       ${26}
+
+    # If that fails, the keyword tries to call the item's possible length and size methods directly
+    ${length} =         Get Length      item=${utility_object2}
+    Should Be Equal     ${length}       ${5}
 
     # The final attempt is trying to get the value of the item's 'length' attribute
     ${length} =         Get Length      item=${utility_object}
@@ -538,7 +545,7 @@ Use "Get Variables"
     ...                 when importing them in the Setting table using the Variables setting
     ...                 The given path must be absolute or found from search path.
     ...                 Forward slashes can be used as path separator regardless the operating system.
-    # arg1 and arg2 are passed to get_variables() method in Tests/variables.py
+    # arg1 and arg2 are passed to get_variables() method in Tests/Use "Set Suite Variable"
     Import Variables    /home/hakan/Python/Robot/built-in-library/Tests/variables.py    first   second
 
 
@@ -596,9 +603,40 @@ Use "Pass Execution If"
 	[Teardown]     ${TestTeardown}  # will be executed even if the condition in "Pass Execution If" is true
 
 Use "Regexp Escape"
-    [Documentation]     Totally unclear
-    [Tags]              not-understood
-    Fail    Test needs to be implemented
+    [Documentation]     Refer to the builtin library code for regexp_escape() and should_match_regexp():
+    ...                 https://github.com/robotframework/robotframework/blob/master/src/robot/libraries/BuiltIn.py
+    ...                 Refer to 10-Regular-Expressions.ipynb for explanations on re.escape() & Figure 1
+    [Tags]              failure-expected
+
+    ${pattern} =    Regexp Escape     hello?      # ? is a special character for RE parser, ${pattern} is a regular string
+    ${instance}=    Should Match Regexp     string=hello?     pattern=${pattern}    # uses re.search(pattern, string)
+
+    ${pattern} =    Regexp Escape      \w+\\?     # -> Python -> \w+\? -> re.escape() -> \\\\w\\+\\\\\\? -> Python -> \\w\+\\\? -> len()/RE parser -> 7
+    Length Should Be    ${pattern}      ${7}        # not 15!
+    ${instance}=    Should Match Regexp     string=\w+\\?     pattern=${pattern}    # uses re.search(pattern, string);  string -> Python -> '\w+\?' -> RE Parser
+
+    ${pattern} =    Regexp Escape      o\\nw     # -> Python -> o\nw -> re.escape() -> o\\\\nw -> Python -> o\\nw -> RE parser -> o\nw
+    ${instance}=    Should Match Regexp     string=hello\\nworld     pattern=${pattern}    # uses re.search(pattern, string);  string -> Python -> 'hello\nworld' -> RE Parser
+
+    ${pattern} =    Regexp Escape      o?*w     # -> Python -> o?*w -> re.escape() -> o\\?\\*w -> Python -> o\?\*w -> RE parser -> o?*w
+    ${instance}=    Should Match Regexp     string=hello?*world     pattern=${pattern}    # uses re.search(pattern, string);  string -> Python -> hello?*world -> RE Parser
+
+    ${pattern} =    Regexp Escape      o\*\?w     # -> Python -> o\*\?w -> re.escape() -> o\\\\\\*\\\\\\?w -> Python -> o\\\*\\\?w -> RE parser -> o\*\?w
+    ${instance}=    Should Match Regexp     string=hello\*\?world     pattern=${pattern}    # uses re.search(pattern, string);  string -> Python -> hello\*\?world -> RE Parser
+
+    ${pattern} =    Regexp Escape      o\\n\\t     # -> Python -> o\n\tw -> re.escape() -> o\\\\n\\\\tw -> Python -> o\\n\\tw -> RE parser -> o\n\tw
+    ${instance}=    Should Match Regexp     string=hello\\n\\tworld     pattern=${pattern}    # uses re.search(pattern, string);  string -> Python -> hello\n\tworld -> RE parser
+
+    @{patterns} =   Regexp Escape     hello?        o\\n\\t     o\*\?w
+    FOR    ${pattern}     IN    @{patterns}
+        ${instance}=    Should Match Regexp     string=hello? hello\\n\\tworld hello\*\?world    pattern=${pattern}
+    END
+
+    ${pattern} =    Regexp Escape      ?=?!?!=?<!    # -> Python -> ?=?!?!=?<! -> re.escape() -> \\?=\\?!\\?!=\\?<! -> Python -> \?=\?!\?!=\?<! -> RE parser -> ?=?!?!=?<!
+    ${pattern} =    Catenate    SEPARATOR=      (   ${pattern}  )
+    ${pattern} =    Catenate    hello   ${pattern}      world
+    ${instance}=    Should Match Regexp     string=hello ?=?!?!=?<! world     pattern=${pattern}    # uses re.search(pattern, string);  string -> Python -> hello ?=?!?!=?<! world -> RE parser
+
 
 Use "Reload Library"
     [Documentation]     https://stackoverflow.com/questions/60025662/robot-fw-builtin-library-reload-library-keyword-how-to-use-reload-libra
@@ -675,11 +713,11 @@ Use "Run Keyword" With A Provided Keyword From Command Line
     [Documentation]     Because the name of the keyword to execute is given as an argument, it can be a variable
     ...                 and thus set dynamically, e.g. from a return value of another keyword or from the command line.
     ${result} =     Run Keyword     ${keyword_to_run}   ${1}     ${1}    ${1}  # from Utils.py
-    Should Be True   $result == 3
+    Should Be True   $result==3
 
 Use "Run Keyword And Continue On Failure"
     [Tags]              failure-expected
-    ${will_be_initilized_with_None} =  Run Keyword And Continue On Failure     raise type error in python   ${1}   ${2}   ${3}
+    ${will_be_initilized_with_None} =  Run Keyword And Continue On Failure     raise type error in python   ${1}   ${2}   ${3}    # from Utils.py
     Log     This line is executed even though the previous line has failed
 
 Use "Run Keyword And Expect Error"
@@ -745,7 +783,8 @@ Use "Run Keyword If"
     Run Keyword If  $condition      Log   If part, will be printed
     Run Keyword Unless  $condition     Log      Else part, will not be printed
     # Usage of ELSE; re-writing the previous if/else construct
-    Run Keyword If  $condition      Log     If part, will be printed        ELSE    Log     Else part, will not be printed
+    Run Keyword If  $condition      Log     If part, will be printed
+    ...         ELSE                Log     Else part, will not be printed
 
     # The return value of this keyword is the return value of the actually executed keyword or
     # Python None if no keyword was execute
@@ -787,10 +826,10 @@ Use "Run Keyword If Timeout Occurred"
     ...                 This keyword can only be used in a test teardown. Trying to use it anywhere else results in an error.
     ...                 Otherwise, this keyword works exactly like "Run Keyword", see its documentation for more details.
     [Tags]              failure-expected
-    [Timeout]           1 milliseconds   # intentionally setting a very short timeout
+    [Timeout]           10 milliseconds   # intentionally setting a very short timeout
     # the following statements will fail the test --> with timeout
     ${no result} = 	    Wait Until Keyword Succeeds 	3x 	100ms 	raise type error in python      a       b       c
-    [Teardown]           Teardown That Uses "Run Keyword If Timeout Occurred"
+    [Teardown]          Teardown That Uses "Run Keyword If Timeout Occurred"
 
 Use "Run Keyword Unless"
     [Documentation]     Run Keyword Unless 	condition, name, *args
@@ -929,24 +968,12 @@ Use "Set Suite Metadata"
     Set Suite Metadata    key2   ${6}    append=True
     Log      ${SUITE METADATA}   # logs a dictionary: {'key1':'value', 'key2': '6'}  <-- 6 is a string, not integer
 
-(Test 1/3) Use "Set Suite Variable"
-    [Documentation]     https://robotframework.org/robotframework/latest/libraries/BuiltIn.html#Set%20Suite%20Variable
-    ...                 Set Suite Variable 	name, *values
-    ...                 Makes a variable available everywhere within the scope of the current suit
-    Set Suite Variable  @{PARENT-SUITE-ONLY-LIST}     Item 1     ${2}   Item 3
-    Set Suite Variable  &{ALSO-CHILD-SUITE-ACCESSIBLE-DICT}   key=value      children=True
-
-(Test 2/3) Use "Set Suite Variable"
-    Variable Should Exist   @{PARENT-SUITE-ONLY-LIST}               # Passes as it should be
-    Variable Should Exist   &{ALSO-CHILD-SUITE-ACCESSIBLE-DICT}     # Passes as it should be
-
-(Test 3/3) Child Test Suite Accessing Variable "ALSO-CHILD-SUITE-ACCESSIBLE-DICT"
+Use "Set Suite Variable"
     [Documentation]     https://stackoverflow.com/questions/59929794/robot-fw-builtin-module-set-suite-variable-how-to-pass-the-suite-variabl
-    ...                 The goal is to have and is to call a simple child test suite, which checks the following:
-    ...                 @{PARENT-SUITE-ONLY-LIST}   is NOT availabe in the child test suite
-    ...                 &{ALSO-CHILD-SUITE-ACCESSIBLE-DICT} is indeed available in the child test suite
-    [Tags]              not-understood
-    Fail        Should Be Implemented
+    ...                 Set Suite Variable 	name, *values
+    ...                 Makes a variable available everywhere within the scope of the current suite
+    ...                 Refer to TestSuiteA > TestSuiteB > TestSuiteC
+    No operation
 
 (Test 1/3) Use "Set Suite Variable": Override A Variable In The Test Case Scope
     [Documentation]     https://stackoverflow.com/questions/59933909/robot-fw-builtin-module-set-suite-variable-how-to-overwrite-the-newly-crea
@@ -966,10 +993,14 @@ Use "Set Suite Metadata"
     # if a variable does not exist within the test case scope, a new variable is created
     Set Suite Variable  ${var2}  suite
 
+    ${var3} = 	Set Variable    value
+    Set Suite Variable      ${var3}
+
 (Test 2/3) Use "Set Suite Variable": Override A Variable In The Test Case Scope
     # Verify the suite variable from the previous test is visible in this new test scope
     Should be equal  ${var}  suite   # passes
     Should Be Equal  ${var2}  suite  # passes
+    Should Be Equal  ${var3}    value   # passes
     # we can re-set the suite scoped variable as a test scoped variable
     Set test variable  ${var}  test   # do not use test suite scoped ${var}
     Should be equal    ${var}  test   # passes
@@ -1095,7 +1126,7 @@ Use "Set Variable If"
     # one of the values after it is returned based on its truth value.
     # This can be continued by adding more conditions without a limit.
     ${var} = 	Set Variable If 	${x} == 0 	zero
-    ... 	${x} > 0 	greater than zero 	less then zero
+    ... 	                        ${x} > 0 	greater than zero 	less then zero
     Should Be True  $var=='zero'
 
     ${x} =      Set Variable    ${-1}
@@ -1209,7 +1240,7 @@ Use "Should Be Equal As Strings"
     ...               https://stackoverflow.com/questions/59791437/what-is-the-difference-between-should-be-true-list-a-b-c-ands
     @{list} =           Create List     a   b   c
     Should Be True      ${list} == ['a', 'b', 'c']    # like running eval("['a', 'b', 'c'] == ['a', 'b', 'c']") on python console
-    Should Be True      $list == ['a', 'b', 'c']
+    Should Be True      $list == ['a', 'b', 'c']      # like running eval("list == ['a', 'b', 'c']") on python console
 
 Use "Should Contain"
     [Documentation]     Should Contain 	container, item, msg=None, values=True, ignore_case=False
@@ -1273,8 +1304,8 @@ Use "Should Contain X Times"
     # with strings
     ${s} =              Set Variable    Lorem Ipsum Lorem Ipsum Lorem Ipsum
     Run Keyword And Ignore Error    Should Contain X Times  ${s}    lorem ipsum  count=${3}   # note the casing
-    Should Contain X Times  ${s}    lorem ipsum  count=3  msg='The new error msg'  ignore_case=True   # note the casing
-    Run Keyword And Ignore Error    Should Contain X Times  ${s}    lorem ipsum  count=2  msg='The new error msg'  ignore_case=True   # note the casing
+    Should Contain X Times  ${s}    lorem ipsum  count=3  msg='This error msg will not be printed'  ignore_case=True   # note the casing
+    Run Keyword And Ignore Error    Should Contain X Times  ${s}    lorem ipsum  count=2  msg='this error msg will be printed'  ignore_case=True   # note the casing
 
     # with lists
     ${lst} =              Create List         ${2}    ${2}    ${2}
@@ -1313,15 +1344,13 @@ Use "Should Match"
     ...                 The same is true for the other patterns. If you're looking for a pattern inside a larger
     ...                 string you need to add * on either side of the pattern to match all of the other characters
     Run Keyword And Ignore Error        Should Match    string=Cannot find anything here   pattern=*not found*   msg='The overwriting msg'
-    Should Match        string=Can find me here   pattern=*me*   msg='The overwriting error'  # passes
+    Should Match        string=Can find me here   pattern=*me*   msg='This msg will not be shown'  # passes
     Should Match        string=Will match with star   pattern=*              # passes
     Should Match        string=Will match this        pattern=*[atx]his      # passes
     Should Match        string=Will match with keyword    pattern=*?eyword    # passes
 
 Use "Should Match Regexp"
-    [Documentation]     Come back here once studied regular expressions in Python
-    [Tags]              not-understood
-    Fail    Test needs to be implemented
+    Log         Refer to the test: Use "Regexp Escape"
 
 Use "Should Not Be Empty"
     [Documentation]     Should Not Be Empty 	item, msg=None
@@ -1382,11 +1411,24 @@ Use "Should Not Be Equal As Numbers"
 Use "Should Not Be Equal As Strings"
     [Documentation]     https://github.com/robotframework/robotframework/blob/master/src/robot/libraries/BuiltIn.py
     [Tags]              not-understood
-    Fail                Implement this case
+
+    @{list_one} =       Create List      1   2   3
+    @{list_two} =       Create List      1   2
+    Should Not Be Equal As Strings       ${list_one}        ${list_two}
 
 Use "Should Not Be True"
     [Documentation]      Should Not Be True 	condition, msg=None
-    Run Keyword And Ignore Error     Should Not Be True      os.linesep == '\n'     msg='The expected overwriting error msg in Linux'
+    Run Keyword And Ignore Error     Should Not Be True      os.linesep == '\\n'     msg='The expected overwriting error msg in Linux'
+    # Referring to the source code of the keyword, here is the same thing in Python interpreter
+    # import os
+    # eval("os.linesep == '\\n'", globals())
+
+    # Python replaces '\\n' to '\x5Cn' and passes it to eval
+    # the condition     os.linesep == '\x5Cn'  is passed to eval, which calls Python
+    # Python then get the value for os.linesep : '\n' replaces that to \x0A
+    # Python then evaluates '\x5Cn' to a newline character \x0A
+    # so finally we have '\x0A' == '\x0A'  which is true
+    # failing the keyword  Should Not Be True -> msg is shown
 
 Use "Should Not Contain"
     [Documentation]     Should Not Contain 	container, item, msg=None, values=True, ignore_case=False
@@ -1463,8 +1505,13 @@ Use "Should Not Match"
     Run Keyword And Ignore Error    Should Not Match        string='Will match with keyword'    pattern=*?eyword*    # fails as expected
 
 Use "Should Not Match Regexp"
-    [Tags]      not-understood
-    Fail    Understand regex first and implement this
+    ${pattern} =     Regexp Escape   \c\s\S\d\D\w\W\x\O?=?!?<=?!=?<!?>?()\Q\E\n\r\t[^abc][abc]
+    ${pattern} =     Catenate    SEPARATOR=     (    ${pattern}     )
+    ${text} =     Set Variable    RE parsers special sequences \c\s\S\d\D\w\W\x\O?=?!?<=?!=?<!?>?()\Q\E\n\r\t[^abc][abc]
+    Run Keyword And Ignore Error        Should Not Match Regexp    ${text}       ${pattern}
+
+    Run Keyword And Ignore Error        Should Not Match Regexp         hello?          hello\\?
+    Should Not Match Regexp     hello world        no match
 
 Use "Should Not Start With"
     [Documentation]         Should Not Start With 	str1, str2, msg=None, values=True, ignore_case=False

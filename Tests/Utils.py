@@ -46,17 +46,21 @@ def title_should_start_with(expected_string):
 def get_tuple():
     return tuple(get_list())
 
+
 @keyword
 def get_list():
     return ['a', 'b', 'a', 'c', 1, 0, 3, 1, 2, 1]
+
 
 @keyword
 def is_string_in_python(s):
     return type(s) == str
 
+
 @keyword
 def is_list_in_python(l):
     return type(l) == list
+
 
 @keyword
 def is_integer_in_python(i):
@@ -104,8 +108,16 @@ class Util(object):
         return 'I am Util object from Python side'
 
 
+class Util2(object):
+    def __init__(self):
+        self.variable = 'value'
+
+    def length(self):
+        return len(self.variable)
+
 if __name__ == 'Utils':   # if the module is imported by Robot
     utility_object = Util()
+    utility_object2 = Util2()
     python_list = [1, 2, 3]
     python_dictionary = {'keyA': 'a', 'keyB': 'b', 'keyC': 'c'}
 
